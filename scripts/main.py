@@ -48,12 +48,6 @@ synop = switchtobool(synop,False)
 isd = switchtobool(isd,True)
 zisd = switchtobool(zisd,True)
 
-# Some Relicts
-make_hist = False
-#make_hist = True
-make_diurnal = False
-#make_diurnal = True
-
 # Download files
 for station in stations:
     if download_files:
@@ -73,16 +67,4 @@ if mk_kassd:
     for station in stations:
         print(station)
         isd_into_kassd(station=station, yearstr=yearstr, yearend=yearend)
-
-# Create a histogram and save figures
-if make_hist:
-    for year in range(2010,2021):
-        histplot(str(year), str(station))
-
-# Create a diurnal cycle of a variable and save figures
-year = 2000
-var = 'METtemp'
-if make_diurnal:
-    diurnalcycleplot(year, station, var)
-
 

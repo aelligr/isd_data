@@ -4,6 +4,18 @@ It describes the uses of these scripts to download data.
 Working directory is scripts/ and run scripts is always with main.py.
 main.py offers options of usage. Use 'python main.py -h' for help.
 
+REQUESTED PYTHON MODULES
+pandas
+numpy
+datetime
+xarray
+ftplib
+gzip
+os
+argparse
+re
+
+VARIABLES DESCRIPTION
 The output file with ISD-, SYNOP-, and METAR-data in, has several variables:
 wind_dir		wind direction [degrees]
 wind_spd		wind speed [meter per second]
@@ -21,7 +33,6 @@ clgh			cloud genus of the high clouds [number]
 ga[1-6]clc		cloud cover of this cloud layer [oktas] (up to 6 times)
 ga[1-6]clh		cloud height of this cloud layer [meters] (up to 6 times)
 ga[1-6]clt		cloud type(genus) of this layer [number] (up to 6 times)
-
 
 Source: ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-format-document.pdf
 Cloud types table low:
