@@ -17,7 +17,7 @@ def switchtobool(var,default):
 parser = ArgumentParser()
 
 # This part handlies the input arguments. Add more options if you like.
-parser.add_argument('-stat','--stations', dest='stations', action='append', help='MANDATORY: list of stations e.g. -stat 64500 64550 64501', required=True, nargs='+')
+parser.add_argument('-stat','--stations', dest='stations', action='append', help='MANDATORY: list of stations USE 6 DIGITS, not 5(add a 0 if necessary) e.g. -stat 645000 645500 645010', required=True, nargs='+')
 parser.add_argument('-yrs','--years', dest='years', help='MANDATORY: from which year to which year you want to handle isd data? e.g. -yrs 1950 1990', required=True, nargs=2)
 parser.add_argument('-dl','--download', dest='download', help='OPTIONAL: Do you want to download data and store it in data/<year> first? Then pass -dl True')
 parser.add_argument('-dec','--decode', dest='decode', help='OPTIONAL: Do you want to decode data and store in data/output? Then pass -dec True')
