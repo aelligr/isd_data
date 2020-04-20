@@ -15,6 +15,19 @@ os
 argparse
 re
 
+HOW-TO:
+python main.py
+-h		shows help stuff
+-stat		MANDATORY: list of stations USE 6 DIGITS, not 5(add a 0 if necessary) e.g. -stat 645000 645500 645010
+-yrs		MANDATORY: from which year to which year you want to handle isd data? e.g. -yrs 1950 1990
+-dl True	OPTIONAL: Do you want to download data and store it in data/<year> first? Then pass -dl True
+-dec True 	OPTIONAL: Do you want to decode data and store in data/output? Then pass -dec True
+-kassd True	OPTIONAL: Do you want to decode data and create a for KASSD readable file? Then pass -kassd True
+-mmo True	OPTIONAL: Do you want to make files only with METAR data in data/output/met_* when decoding? Then pass -mmo True Default False
+-mso True	OPTIONAL: Do you want to make files only with SYNOP data in data/output/syn_* when decoding? Then pass -mso True Default False
+-mall True	OPTIONAL: Do you want to make files with all available data from isd into data/output/isd_*? Then pass -mall True Default True
+-zisd True	OPTIONAL: Do you want to zip the created isd files? They are very big. Then pass -zisd True Default True
+
 VARIABLES DESCRIPTION
 The output file with ISD-, SYNOP-, and METAR-data in, has several variables:
 wind_dir		wind direction [degrees]
