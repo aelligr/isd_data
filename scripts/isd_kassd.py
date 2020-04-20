@@ -125,6 +125,7 @@ def isd_into_kassd(station=['645000'],yearstr=2019,yearend=2020):
         'cloud_altitude_2,cloud_fraction_2,cloud_type_2,cloud_altitude_3,cloud_fraction_3,cloud_type_3,'+ \
         'cloud_altitude_4,cloud_fraction_4,cloud_type_4,'
     variables_units = 'm, , , , , ,m, , ,m, , ,m, ,\n'
+    write_head = True
 
     # Create file
     outfile_kassd =  open(datapath_out+'kassd_%s_%s_%s.txt' % (station,yearstr,yearend) , 'w')
@@ -150,13 +151,14 @@ def isd_into_kassd(station=['645000'],yearstr=2019,yearend=2020):
             data = infile.read().splitlines()
 
         # Create File Header for KASSD
-        if YY == yearstr:
+        if write_head:
             lat = data[0][28:34]
             lon = data[0][35:41]
             outfile_kassd.write('station_name = '+station_name+' \nstation_id = '+station[0:5]+ \
                     ' \nlat = '+lat+' \nlon = '+lon+'\n')
             outfile_kassd.write(variables_kassd+'\n')
             outfile_kassd.write(variables_units)
+            write_head = False
 
 	
         # GO through data line by line
