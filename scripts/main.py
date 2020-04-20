@@ -65,9 +65,7 @@ for station in stations:
 for station in stations:
     if split_data:
         split_isd_data(station=station, yearstr=yearstr, yearend=yearend, mk_isd=isd, mk_synop=synop, mk_metar=metar)
-        print(zisd)
         if os.path.isfile('../data/output/isd_'+str(station)+'_'+str(yearstr)+'_'+str(yearend-1)+'.txt') and zisd:
-            print('entered',zisd)
             os.system('gzip -f ../data/output/isd_'+str(station)+'_'+str(yearstr)+'_'+str(yearend-1)+'.txt')
 
 # convert isd, synop, and Metar data into kassd readable files

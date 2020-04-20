@@ -16,7 +16,11 @@ def download(year, station):
     # prepare for enter ftp server, login anonymous
     ftp = FTP('ftp.ncdc.noaa.gov')
     ftp.login()
-    ftp.cwd('/pub/data/noaa/'+year)
+    try:
+        ftp.cwd('/pub/data/noaa/'+year)
+    except:
+        print('This year('+str(year)+') is not on isd.')
+        return
 
     # download files if they exist on ftp server and not in local directory
     try:

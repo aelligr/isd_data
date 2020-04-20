@@ -212,7 +212,7 @@ def decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn):
         # Temperature ----------------------------------------------------------------
         if check_SYNOP[0][8]:
             if check_SYNOP[0][8][2:5].isdigit():
-                tmp = float(check_SYNOP[0][8][2:5]) / 10.
+                tmp = round(float(check_SYNOP[0][8][2:5]) / 10.,2)
                 if check_SYNOP[0][8][1] == '1':
                     tmp = tmp*(-1)
             else:
@@ -240,9 +240,9 @@ def decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn):
         # Tmax ----------------------------------------------------------------
         if check_SYNOP[0][18]:
             if check_SYNOP[0][18][2:5].isdigit():
-                tmax = float(check_SYNOP[0][18][2:5]) / 10.
+                tmax = round(float(check_SYNOP[0][18][2:5]) / 10., 2)
                 if check_SYNOP[0][18][1] == '1':
-                    tmax = tmax*(-1)
+                    tmax = round(tmax*(-1), 2)
                 elif check_SYNOP[0][18][1] != '0' and check_SYNOP[0][18][1] != '1':
                     tmax = fv2
             else:
@@ -253,7 +253,7 @@ def decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn):
         # Tmin ----------------------------------------------------------------
         if check_SYNOP[0][19]:
             if check_SYNOP[0][19][2:5].isdigit():
-                tmin = float(check_SYNOP[0][19][2:5]) / 10.
+                tmin = round(float(check_SYNOP[0][19][2:5]) / 10., 2)
                 if check_SYNOP[0][19][1] == '1':
                     tmin = tmin*(-1)
                 elif check_SYNOP[0][19][1] != '0' and check_SYNOP[0][19][1] != '1':
@@ -268,7 +268,7 @@ def decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn):
             rh = check_SYNOP[0][6][2:5]
             if rh.isdigit():
                 if check_SYNOP[0][9][1] == '9':
-                    rh = float(check_SYNOP[0][9][2:5]) / 10.
+                    rh = round(float(check_SYNOP[0][9][2:5]) / 10., 2)
                 else:
                     rh = fv
             else:
@@ -428,7 +428,7 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
                 # Calculate mm/h
                 if prec != '9999':
                     if prec_h != '99' and prec_h != '00':
-                        aa_out['aa'+str(n)][0] = str(float(prec) / float(prec_h) / 10.)
+                        aa_out['aa'+str(n)][0] = str(round(float(prec) / float(prec_h) / 10., 2))
                         aa_out['aa'+str(n)][1] = prec_h
                     elif prec == '0000':
                         aa_out['aa'+str(n)][0] = prec
