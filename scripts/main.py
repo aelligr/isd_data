@@ -1,6 +1,4 @@
 from download_isd import download
-from hist_plot_isd import histplot
-from diurnalcycle import diurnalcycleplot
 from isd_read import split_isd_data
 from isd_kassd import isd_into_kassd
 from argparse import ArgumentParser
