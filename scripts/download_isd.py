@@ -9,7 +9,7 @@ from ftplib import FTP
 def download(year, station):
 
     # path, url, concate filename
-    path = '/home/raffael/dyvalocca/workarea/isd/data/'
+    path = '../data/'
     url = 'ftp://ftp.ncdc.noaa.gov/pub/data/noaa/'
     filename = station+'-99999-'+str(year)
 
