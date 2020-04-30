@@ -35,6 +35,11 @@ wind_spd		wind speed [meter per second]
 temp			temperature [celsius]
 dtemp			dewpoint temperature [celsius]
 press			pressure [hectopascal]
+Sundur			Sun shine duration [hours]
+synwea			Synoptic weather phenomena from 7th group (see synop Code)
+synweco1		Synoptic weather condition from 7th group (see synop Code)
+synweco2		Synoptic weather condition from 7th group (see synop Code)
+metwe			Metar weather condition (eg: TS = Thunderstorm, see metar Code)
 preci1			precipitation measured during certain time period [milimeter per hour] (up to 4 times)
 precih1			certain time period for precipitation [hour] (up to 4 times)
 clct			cloud cover total [oktas]
