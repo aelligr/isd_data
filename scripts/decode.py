@@ -71,7 +71,10 @@ vvsss    = '\s*(5\d{4})?'
 iiffff   = '\s*(2\d{4})?'
 iiiffff  = '\s*(3\d{4})?'
 ivffff   = '\s*(4\d{4})?'
+vevap    = '\s*(5\d{4})?'
+vvss     = '\s*(55\d{3})?'
 vviiiss  = '\s*(553\d{2})?'
+vpres    = '\s*(5[8|9]\d{3})?'
 iiffff2  = '\s*(2\d{4})?'
 iiiffff2 = '\s*(3\d{4})?'
 ivffff2  = '\s*(4\d{4})?'
@@ -145,8 +148,8 @@ def decodemetar(line,date,time,lat,lon,header_METAR,outfile_met):
 
         # Sky Condition 1-4 --------------------------------------------------------------
         # Create dicitionary
-        ga_out = { 'ga'+str(n) : [fv, fv, fv] for n in range(1,5) }
-        for n in range(1,5):
+        ga_out = { 'ga'+str(n) : [fv, fv, fv] for n in range(1,7) }
+        for n in range(1,7):
             if check_METAR[n+12]:
                 (ga_out['ga'+str(n)][0],ga_out['ga'+str(n)][1],ga_out['ga'+str(n)][2]) = skycondition(check_METAR[n+12])
 
@@ -336,7 +339,7 @@ def decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn):
 
         # Cloud altidute, fraction, and type up to 4 times(ascending order) ------------------------
         cl333 = { 'cl333'+str(n) : [fv, fv, fv] for n in range(1,5) }
-        for n in range(0,4):
+        for n in range(1,5):
             if check_SYNOP[0][n+34]:
                 # Cloud height
                 if check_SYNOP[0][n+34][3:5].isnumeric():
@@ -381,10 +384,10 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     synop_ex =  synoppre +synopmsk +synopgeo +synopsta +irixhvv  +nddff    +\
                 oofff    +isnttt   +iisnttt  +iiipppp  +ivpppp   +vappp    +\
                 virrrtr  +viiwww1w2+nhclcmch +ixgggg   +preiii   +prezero  +\
-                isnttt2  +iisnttt2 +iiiesntgt+ivesss   +vvsss    +vvsss    +\
-                vvsss    +vvsss    +iiffff   +iiiffff  +ivffff   +vviiiss  +\
-                iiffff2  +iiiffff2 +ivffff2  +virrrtr2 +nschshs  +nschshs  +\
-                nschshs  +nschshs  +ixspspsps #39
+                isnttt2  +iisnttt2 +iiiesntgt+ivesss   +vevap    +vvss     +\
+                vviiiss  +vpres    +iiffff   +iiiffff  +ivffff   +dummat   +\
+                dummat   +dummat   +dummat   +iiffff2  +iiiffff2 +ivffff2  +\
+                virrrtr2 +nschshs  +nschshs  +nschshs  +nschshs  +ixspspsps #42
 
     # write output isd mandatory section
     wind_dir = line[60:63]
@@ -416,6 +419,7 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     clhl = fv
     aa_out = { 'aa'+str(n) : [fv, fv] for n in range(1,5) }
     ga_out = { 'ga'+str(n) : [fv, fv, fv] for n in range(1,7) }
+    sundur = fv
 
     if 'ADD' in line:
         # Find precipitation AA1-4
@@ -522,21 +526,31 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
             if synopdata and case_SYNOP and n < 5:
                 # cloud cover
                 if ga_out['ga'+str(n)][0] == '99' or clct == fv:
-                    if check_SYNOP[0][n+34].isnumeric():
-                        ga_out['ga'+str(n)][0] = check_SYNOP[0][n+34][1:2]
+                    if check_SYNOP[0][n+37].isnumeric():
+                        ga_out['ga'+str(n)][0] = check_SYNOP[0][n+37][1:2]
                 # cloud height
                 if ga_out['ga'+str(n)][1] == '99999' or clct == fv:
-                    if check_SYNOP[0][n+34].isnumeric():
-                        ga_out['ga'+str(n)][1] = cloudheight333(check_SYNOP[0][n+34][3:5])
+                    if check_SYNOP[0][n+37].isnumeric():
+                        ga_out['ga'+str(n)][1] = cloudheight333(check_SYNOP[0][n+37][3:5])
                 # cloud type
                 if ga_out['ga'+str(n)][2] == '99' or clct == fv:
-                    if check_SYNOP[0][n+34].isnumeric():
-                        ga_out['ga'+str(n)][2] = check_SYNOP[0][n+34][2:3]
+                    if check_SYNOP[0][n+37].isnumeric():
+                        ga_out['ga'+str(n)][2] = check_SYNOP[0][n+37][2:3]
 
             # Check for METAR to update if missing
             if metardata and check_METAR and n < 5:
                 if check_METAR[n+12]:
                     (ga_out['ga'+str(n)][0],ga_out['ga'+str(n)][1],ga_out['ga'+str(n)][2]) = skycondition(check_METAR[n+12])
+
+        # Find radiation in ISD and SYNOP
+        gj1 = str(re.findall('GJ1\d{4}\w{1}',line))
+        if len(gj1) > 3:
+            # Cloud fraction total
+            sundur = str(round(float(gj1[5:9])/60))
+        if synopdata and case_SYNOP:
+            if sundur == '9999' or sundur == fv:
+                if check_SYNOP[0][23]:
+                    sundur = str(float(check_SYNOP[0][23][2:5])/10)
 
 
     # Write date, time, and coords
@@ -548,6 +562,7 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     writeoutput(outfile_isd,str(float(temp[1:5])/10.))
     writeoutput(outfile_isd,str(float(dtemp[1:5])/10.))
     writeoutput(outfile_isd,press)
+    writeoutput(outfile_isd,sundur)
     for n in range(1,5): 
         for x in range(0,2):
             writeoutput(outfile_isd,aa_out['aa'+str(n)][x])
