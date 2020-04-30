@@ -84,8 +84,8 @@ ixspspsps= '\s*(9\d{4})?'
 
 # a dummy for not matching patterns
 dummat   = '(99999)?'
-fv = -9999
-fv2 = -1111
+fv = '-9999'
+fv2 = '-1111'
 
 
 ################################################################################
@@ -390,14 +390,38 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
                 virrrtr2 +nschshs  +nschshs  +nschshs  +nschshs  +ixspspsps #42
 
     # write output isd mandatory section
-    wind_dir = line[60:63]
-    wind_spd = line[65:69]
-    lcl5_8 = line[70:75]
-    cavok = line[77:78]
-    visib = line[78:84]
-    temp = line[87:92]
-    dtemp = line[93:98]
-    press = line[99:104]
+    if line[60:63] != '999':
+        wind_dir = line[60:63]
+    else: 
+        wind_dir = fv
+    if line[65:69] != '9999':
+        wind_spd = line[65:69]
+    else:
+        wind_spd = fv
+    if line[70:75] != '99999':
+        lcl5_8 = line[70:75]
+    else:
+        lcl5_8 = fv
+    if line[77:78] != '9':
+        cavok = line[77:78]
+    else:
+        cavok = fv
+    if line[78:84] != '999999':
+        visib = line[78:84]
+    else:
+        visib = fv
+    if line[87:92] != '+9999':
+        temp = line[87]+str(round(float(line[88:92])/10,1))
+    else:
+        temp = fv
+    if line[93:98] != '+9999':
+        dtemp = line[93]+str(round(float(line[94:98])/10,1))
+    else:
+        dtemp = fv
+    if line[99:104] != '99999':
+        press = line[99:104]
+    else:
+        press = fv
 
     # Prepare for checking SYNOP data in the code
     case_SYNOP = re.findall('REMSYN\w+',line)
@@ -411,6 +435,10 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     check_METAR = [item for t in re.findall(metar_ex,line) for item in t]
 
     # Find additional not mandatory data in ISD
+    synwea = fv
+    synweco1 = fv
+    synweco2 = fv
+    metwe = fv
     clfl = fv
     clgl = fv
     clgm = fv
@@ -450,108 +478,141 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
         # Test if GF1 is there, if not check SYNOP
         if len(gf1) > 3: 
             # Cloud fraction total
-            clct = gf1[5:7]
+            if gf1[5:7] != '99':
+                clct = gf1[5:7]
 
             # Cloud fraction lowest
-            clfl = gf1[10:12]
+            if gf1[10:12] != '99':
+                clfl = gf1[10:12]
 
             # Cloud genus lowest
-            clgl = gf1[13:15]
+            if gf1[13:15] != '99':
+                clgl = gf1[13:15]
 
             # Cloud height lowest
-            clhl = gf1[16:21]
+            if gf1[16:21] != '99999':
+                clhl = gf1[16:21]
             
             # Cloud genus middle
-            clgm = gf1[22:24]
+            if gf1[22:24] != '99':
+                clgm = gf1[22:24]
 
             # Cloud genus high
-            clgh = gf1[25:27]
+            if gf1[25:27] != '99':
+                clgh = gf1[25:27]
 
         # Check for SYNOP to update if missing
         if synopdata and case_SYNOP:
             # Cloud fraction total
-            if clct == '99' or clct == fv:
+            if clct == fv:
                 if check_SYNOP[0][5][0:1].isnumeric():
                     clct = check_SYNOP[0][5][0:1]
             # Cloud fraction lowest
-            if clfl == '99' or clct == fv:
+            if clfl == fv:
                 if check_SYNOP[0][14][2:3].isnumeric():
-                    clgl = check_SYNOP[0][14][2:3]
+                    clfl = check_SYNOP[0][14][2:3]
             # Cloud genus lowest
-            if clgl == '99' or clct == fv:
+            if clgl == fv:
                 if check_SYNOP[0][14][2:3].isnumeric():
                     clgl = check_SYNOP[0][14][2:3]
             # Cloud height lowest
-            if clhl == '99999' or clct == fv:
+            if clhl == fv:
                 if check_SYNOP[0][4][2:3].isnumeric():
                     clhl = cloudheightlowestlist(check_SYNOP[0][4][2:3])
             # Cloud genus middle
-            if clgm == '99' or clct == fv:
+            if clgm == fv:
                 if check_SYNOP[0][14][3:4].isnumeric():
                     clgm = check_SYNOP[0][14][3:4]
             # Cloud genus high
-            if clgh == '99' or clct == fv:
+            if clgh == fv:
                 if check_SYNOP[0][14][4:5].isnumeric():
                     clgh = check_SYNOP[0][14][4:5]
 
         # Check for METAR to update if missing
-        if metardata and check_METAR:
+        if metardata and check_METAR != []:
             # Cloud fraction lowest
-            if clfl == '99' or clct == fv:
+            if clct == fv:
                 if check_METAR[12]:
                     (clfl,dum,dumm) = skycondition(check_METAR[12])
             # Cloud height lowest
-            if clhl == '99999' or clct == fv:
+            if clct == fv:
                 if check_METAR[12]:
                     (dum,clhl,dumm) = skycondition(check_METAR[12])
             # Cloud genus low
-            if clgm == '99' or clct == fv:
+            if clct == fv:
                 if check_METAR[12]:
                     (dum,dumm,clgl) = skycondition(check_METAR[12])
 
         # Find skycover GA1-6
         # Create dicitionary
+        met_skip = True
+        syn_skip = True
         for n in range(1,7):
             # Check ISD data
             ga_check = str(re.findall('GA'+str(n)+'\d{2}\w{1}\+\d{5}\w{1}\d{2}\w{1}',line))
             if ga_check != '[]':
                 # cloud cover 
-                ga_out['ga'+str(n)][0] = ga_check[5:7]
+                if ga_check[5:7] != '99':
+                    ga_out['ga'+str(n)][0] = ga_check[5:7]
                 # cloud height
-                ga_out['ga'+str(n)][1] = ga_check[9:14]
+                if ga_check[9:14] != '99999':
+                    ga_out['ga'+str(n)][1] = ga_check[9:14]
                 # cloud type
-                ga_out['ga'+str(n)][2] = ga_check[15:17]
+                if ga_check[15:17] != '99':
+                    ga_out['ga'+str(n)][2] = ga_check[15:17]
 
             # Check for SYNOP to update if missing
-            if synopdata and case_SYNOP and n < 5:
+            if synopdata and case_SYNOP and n < 5 and syn_skip:
+                if check_SYNOP[0][n+37] == '':
+                    syn_skip = False
                 # cloud cover
-                if ga_out['ga'+str(n)][0] == '99' or clct == fv:
+                if ga_out['ga'+str(n)][0] == fv:
                     if check_SYNOP[0][n+37].isnumeric():
                         ga_out['ga'+str(n)][0] = check_SYNOP[0][n+37][1:2]
                 # cloud height
-                if ga_out['ga'+str(n)][1] == '99999' or clct == fv:
+                if ga_out['ga'+str(n)][1] == fv:
                     if check_SYNOP[0][n+37].isnumeric():
                         ga_out['ga'+str(n)][1] = cloudheight333(check_SYNOP[0][n+37][3:5])
                 # cloud type
-                if ga_out['ga'+str(n)][2] == '99' or clct == fv:
+                if ga_out['ga'+str(n)][2] == fv:
                     if check_SYNOP[0][n+37].isnumeric():
                         ga_out['ga'+str(n)][2] = check_SYNOP[0][n+37][2:3]
 
             # Check for METAR to update if missing
-            if metardata and check_METAR and n < 5:
+            if metardata and check_METAR != []  and n < 5 and met_skip:
+                if check_METAR[n+12] == '':
+                    met_skip = False
                 if check_METAR[n+12]:
-                    (ga_out['ga'+str(n)][0],ga_out['ga'+str(n)][1],ga_out['ga'+str(n)][2]) = skycondition(check_METAR[n+12])
+                    if ga_out['ga'+str(n)][0] == fv:
+                        (ga_out['ga'+str(n)][0],dum,dumm) = skycondition(check_METAR[n+12])
+                    if ga_out['ga'+str(n)][1] == fv:
+                        (dum,ga_out['ga'+str(n)][1],dumm) = skycondition(check_METAR[n+12])
+                    if ga_out['ga'+str(n)][2] == fv:
+                        (dum,dumm,ga_out['ga'+str(n)][2]) = skycondition(check_METAR[n+12])
 
         # Find radiation in ISD and SYNOP
         gj1 = str(re.findall('GJ1\d{4}\w{1}',line))
         if len(gj1) > 3:
             # Cloud fraction total
-            sundur = str(round(float(gj1[5:9])/60))
+            if gj1[5:9] != '9999':
+                sundur = str(round(float(gj1[5:9])/60))
         if synopdata and case_SYNOP:
-            if sundur == '9999' or sundur == fv:
+            if sundur == fv:
                 if check_SYNOP[0][23]:
                     sundur = str(float(check_SYNOP[0][23][2:5])/10)
 
+    # Check weather phenomena of synop and metar
+    if synopdata and case_SYNOP:
+        if check_SYNOP[0][13]:
+            if check_SYNOP[0][13][1:3] != '00':
+                synwea = check_SYNOP[0][13][1:3]
+            if check_SYNOP[0][13][3] != '/':
+                synweco1 = check_SYNOP[0][13][3]
+            if check_SYNOP[0][13][4] != '/':
+                synweco2 = check_SYNOP[0][13][4]
+    if metardata and check_METAR != []:
+        if check_METAR[10]:
+            metwe = check_METAR[10]
 
     # Write date, time, and coords
     outfile_isd.write('%9s %6s ' % (date,time))
@@ -559,10 +620,14 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     # Write variables into files
     writeoutput(outfile_isd,wind_dir)
     writeoutput(outfile_isd,wind_spd)
-    writeoutput(outfile_isd,str(float(temp[1:5])/10.))
-    writeoutput(outfile_isd,str(float(dtemp[1:5])/10.))
+    writeoutput(outfile_isd,temp)
+    writeoutput(outfile_isd,dtemp)
     writeoutput(outfile_isd,press)
     writeoutput(outfile_isd,sundur)
+    writeoutput(outfile_isd,synwea)
+    writeoutput(outfile_isd,synweco1)
+    writeoutput(outfile_isd,synweco2)
+    writeoutput(outfile_isd,metwe)
     for n in range(1,5): 
         for x in range(0,2):
             writeoutput(outfile_isd,aa_out['aa'+str(n)][x])

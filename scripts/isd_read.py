@@ -30,7 +30,7 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
 
     header_SYNOP = ['T','Td','Tmax','Tmin','RH','Wdir','Wspd','Prec','clhlow','clfrtot','clfrlow','clt_l','clt_m','clt_h','clh1','clfr1','clty1','clh2','clfr2','clty2','clh3','clfr3','clty3','clh4','clfr4','clty4']
     header_METAR = ['METwdir','METwspd','METwgst','visib','press','temp','dewp','whe_phe','cc1','ch1','cc2','ch2','cc3','ch3','cc4','ch4']
-    header_ISD = ['wind_dir','wind_spd','temp','dtemp','press','Sundur','preci1','precih1','preci2','precih2','preci3','precih3','preci4','precih4','clct','clfl','clgl','clhl','clgm','clgh','ga1clc','ga1clh','ga1clt','ga2clc','ga2clh','ga2clt','ga3clc','ga3clh','ga3clt','ga4clc','ga4clh','ga4clt','ga5clc','ga5clh','ga5clt','ga6clc','ga6clh','ga6clt']
+    header_ISD = ['wind_dir','wind_spd','temp','dtemp','press','Sundur','synwea','synweco1','synweco2','metwe','preci1','precih1','preci2','precih2','preci3','precih3','preci4','precih4','clct','clfl','clgl','clhl','clgm','clgh','ga1clc','ga1clh','ga1clt','ga2clc','ga2clh','ga2clt','ga3clc','ga3clh','ga3clt','ga4clc','ga4clh','ga4clt','ga5clc','ga5clh','ga5clt','ga6clc','ga6clh','ga6clt']
     # header for KASS-D
     variables_synop = 'variable = cloud_height_lowest,cloud_area_fraction_total,cloud_area_fraction_lowest,'+ \
         'cloud_genus_low,cloud_genus_medium,cloud_genus_high,cloud_altitude_1,cloud_fraction_1,cloud_type_1,'+ \
@@ -148,7 +148,7 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
             ###############################################################################
             if mk_isd:
 
-                decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,metardata,synopdata)
+                decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,metardata)
 
 			
     # End Line ---------------------------------------------------------------------
