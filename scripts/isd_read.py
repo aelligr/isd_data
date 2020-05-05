@@ -97,6 +97,8 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
         time_prev = ''
 		
         # GO through data line by line
+        isd_write = True
+        isd_write_next = True
         for i_line,line in enumerate(data):
 			
             date = line[15:23]
@@ -125,6 +127,26 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
             elif line[41:46] == 'SY-SA':
                 synopdata = True
 
+            # Check if there is twice the same time stamp
+            isd_write_next = True
+            try:
+                if date == data[i_line+1][15:23] and time == data[i_line+1][23:27]:
+                    if synopdata == True and metardata == True:
+                        isd_write_next = False
+                    elif synopdata == True and metardata == False:
+                        isd_write_next = False
+                    elif synopdata == False and metardata == True:
+                        if data[i_line+1][41:46] == 'SY-MT' or data[i_line+1][41:46] == 'FM-12' or data[i_line+1][41:46] == 'FM-14' or\
+                                data[i_line+1][41:46] == 'S-S-A' or data[i_line+1][41:46] == 'SY-AE' or data[i_line+1][41:46] == 'SY-AU' or\
+                                data[i_line+1][41:46] == 'SY-SA':
+                            isd_write = False
+                        else:
+                            isd_write = True
+                    elif synopdata == False and metardata == False:
+                        continue
+            except:
+                pass
+
             ###############################################################################
             ############### METAR decoding and writing in met_-file #######################
             ###############################################################################
@@ -146,9 +168,14 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
             ###############################################################################
             ################### ISD only ##################################################
             ###############################################################################
-            if mk_isd:
+            if mk_isd and isd_write:
 
                 decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,metardata)
+
+            # Handle bool variable of not having twice the same timestep
+            isd_write = True
+            if isd_write_next == False:
+                isd_write = False
 
 			
     # End Line ---------------------------------------------------------------------
