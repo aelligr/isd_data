@@ -92,7 +92,10 @@ fv2 = '-1111'
 ####################### FUNCTIONS TO DECODE ####################################
 ################################################################################
 def writeoutput(outfile,var):
-    outfile.write('%9s ' % var)
+    if len(str(var).split(sep=' ')) > 1:
+        outfile.write('%9s ' % fv)
+    else:
+        outfile.write('%9s ' % var)
 
 def decodemetar(line,date,time,lat,lon,header_METAR,outfile_met):
 
@@ -395,7 +398,7 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
     else: 
         wind_dir = fv
     if line[65:69] != '9999':
-        wind_spd = line[65:69]
+        wind_spd = float(line[65:69])/10.
     else:
         wind_spd = fv
     if line[70:75] != '99999':
@@ -431,8 +434,13 @@ def decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,me
         check_SYNOP = re.findall(synop_ex,line)
 
     # Prepare for checking METAR data in the code
-    check_METAR = ''
+    check_METAR = []
     check_METAR = [item for t in re.findall(metar_ex,line) for item in t]
+    # Test for NIL
+    if re.search('MET\w*\s*\w*\s*NIL',line):
+        check_METAR = []
+    if re.search('MET\d{3}NOSIG',line):
+        check_METAR = []
 
     # Find additional not mandatory data in ISD
     synwea = fv
