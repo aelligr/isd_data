@@ -1,4 +1,7 @@
-fv = -9999
+import pandas as pd
+import numpy as np
+import urllib.request
+fv = np.nan
 ################################################################################
 ################# Decode parameters from METAR #################################
 ################################################################################
@@ -19,6 +22,7 @@ def windmetar(check_metar1,check_metar2):
     if METwdir.isdigit():
         pass
     elif METwdir == 'VRB':
+        METwdir = -1
         pass
     else:
         METwdir = fv
@@ -48,7 +52,7 @@ def skycondition(check_metar):
             clc = '4'
             clh = str(round(float(check_metar[3:6])*100*0.3048,2))
         elif check_metar[0:3] == 'BKN':
-            clc = '6'
+            clc = '7'
             clh = str(round(float(check_metar[3:6])*100*0.3048,2))
         elif check_metar[0:3] == 'OVC':
             clc = '8'
@@ -63,7 +67,7 @@ def skycondition(check_metar):
             if check_metar[6:8] == 'CB':
                 clt = '09'
             elif check_metar[6:8] == 'TC':
-                clt = '12'
+                clt = '02'
             else:
                 clt = fv
         else:
@@ -141,7 +145,7 @@ def cloudheightlowestlist(var):
     else:
         return fv
 
-def windsynop(check_synop1,check_synop2):
+def windsynop(check_synop1):
     wdir = check_synop1[1:3]
     wspd = check_synop1[3:5]
     if wdir.isdigit():
@@ -152,8 +156,98 @@ def windsynop(check_synop1,check_synop2):
         wspd = int(wspd)
     else:
         wspd = fv
-    if check_synop2:
-        if check_synop2[-1] == '3' or check_synop2[-1] == '4':
-            wspd = str(wspd * 0.514444)
+    try:
+        wspd = str(wspd * 0.514444)
+    except:
+        pass
     return (wdir,wspd)
             
+def rh2dewpoint(temp,rh):
+    es = 6.11*10.0**(7.5*temp/(237.7+temp))
+    e = (rh*es)/100
+    dtemp = (-430.22+237.7*(np.log(e))/(-np.log(e)+19.08))
+    return dtemp
+
+def synoprain(var):
+    try:
+        rain = float(var[1:4])
+        n = var[5]
+        if rain >= 900.:
+            rain = (rain-990)/10.
+    except:
+        return fv
+    if n == '1':
+        return rain/6.
+    elif n == '2':
+        return rain/12.
+    elif n == '3':
+        return rain/18.
+    elif n == '4':
+        return rain/24.
+    elif n == '5':
+        return rain/1.
+    elif n == '6':
+        return rain/2.
+    elif n == '7':
+        return rain/3.
+    elif n == '8':
+        return rain/9.
+    elif n == '9':
+        return rain/15.
+    else:
+        return rain/1.
+
+
+def fusedata(prio1,prio2,prio3,index,priority):
+    mask = pd.Series(np.nan,index)
+    series = pd.Series(np.nan,index)
+    
+    for var in index:
+        # mask for values priority 1 and assign priority 1 values
+        series[var] = prio1[var] if ~np.isnan(prio1[var]) else series[var]
+        mask[var] = priority[0] if ~np.isnan(prio1[var]) else mask[var]
+        # update values with priority 2 if missing and update according mask
+        mask[var] = priority[1] if (np.isnan(series[var]) and ~np.isnan(prio2[var])) else mask[var]
+        series[var] = prio2[var] if (np.isnan(series[var]) and ~np.isnan(prio2[var])) else series[var]
+        # update values with priority 3 if missing and update according mask
+        mask[var] = priority[2] if (np.isnan(series[var]) and ~np.isnan(prio3[var])) else mask[var]
+        series[var] = prio3[var] if (np.isnan(series[var]) and ~np.isnan(prio3[var])) else series[var]
+
+    return (series, mask)
+
+
+def fuse_diff_timesteps(prio1,prio2,mask1,mask2,index):
+    mask = pd.Series(np.nan,index)
+    series = pd.Series(np.nan,index)
+
+    for var in index:
+        # mask for values priority 1 and assign priority 1 values
+        mask[var] = mask1[var] if ~np.isnan(prio1[var]) else mask[var]
+        series[var] = prio1[var] if ~np.isnan(prio1[var]) else series[var]
+        # update values with priority 2 if missing and update according mask
+        mask[var] = mask2[var] if (np.isnan(series[var]) and ~np.isnan(prio2[var])) else mask[var]
+        series[var] = prio2[var] if (np.isnan(series[var]) and ~np.isnan(prio2[var])) else series[var]
+
+    return (series, mask)
+
+
+def writeoutput(outfile,var,csv):
+    if csv:
+        if str(var) == str(np.nan):
+            outfile.write(',')
+        else:
+            outfile.write(',')
+            outfile.write(str(var))
+    else:
+        if len(str(var).split(sep=' ')) > 1:
+            outfile.write('%9s ' % fv)
+        else:
+            outfile.write('%9s ' % var)
+
+#def bufrfromogi(station,date,time):
+#    check_SYNOP = urllib.request.urlopen('https://www.ogimet.com/cgi-bin/getsynop?block='+station+'&begin='+date+time+'&end='+date+time)
+#    print(check_SYNOP.read(100).decode('utf-8'))
+
+
+#bufrfromogi('64500','20180921','1800')
+

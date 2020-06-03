@@ -1,6 +1,6 @@
 from download_isd import download
 from isd_read import split_isd_data
-from isd_kassd import isd_into_kassd
+#from isd_kassd import isd_into_kassd
 from argparse import ArgumentParser
 import os
 
@@ -26,6 +26,8 @@ parser.add_argument('-mmo','--makemetaronly', dest='mmo', help='OPTIONAL: Do you
 parser.add_argument('-mso','--makesynoponly', dest='mso', help='OPTIONAL: Do you want to make files only with SYNOP data in data/output/syn_* when decoding? Then pass -mso True Default False')
 parser.add_argument('-mall','--makeall', dest='mall', help='OPTIONAL: Do you want to make files with all available data from isd into data/output/isd_*? Then pass -mall True Default True')
 parser.add_argument('-zisd','--zipisd', dest='zisd', help='OPTIONAL: Do you want to zip the created isd files? They are very big. Then pass -zisd True Default True')
+parser.add_argument('-csv','--commaseparatedvalue', dest='csv', help='OPTIONAL: Do you want to produce csv files? Then pass -csv True on the other hand -csv False')
+parser.add_argument('-meta','--makemetadata', dest='meta', help='OPTIONAL: Do you want to produce a meta data file? Then pass -meta True on the other hand -meta False')
 
 # Pass input variables to variables
 args            = parser.parse_args()
@@ -39,6 +41,8 @@ metar           = args.mmo
 synop           = args.mso
 isd             = args.mall
 zisd            = args.zisd
+csv             = args.csv
+meta            = args.meta
 
 download_files = switchtobool(download_files,False)
 split_data = switchtobool(split_data,False)
@@ -47,6 +51,8 @@ metar = switchtobool(metar,False)
 synop = switchtobool(synop,False)
 isd = switchtobool(isd,True)
 zisd = switchtobool(zisd,True)
+csv = switchtobool(csv,True)
+meta = switchtobool(meta,False)
 
 # Download files
 for station in stations:
@@ -58,7 +64,7 @@ for station in stations:
 # Split and decode data into readable files -> data/output
 for station in stations:
     if split_data:
-        split_isd_data(station=station, yearstr=yearstr, yearend=yearend, mk_isd=isd, mk_synop=synop, mk_metar=metar)
+        split_isd_data(station=station, yearstr=yearstr, yearend=yearend, mk_isd=isd, mk_meta=meta, csv=csv)
         if os.path.isfile('../data/output/isd_'+str(station)+'_'+str(yearstr)+'_'+str(yearend-1)+'.txt') and zisd:
             os.system('gzip -f ../data/output/isd_'+str(station)+'_'+str(yearstr)+'_'+str(yearend-1)+'.txt')
 

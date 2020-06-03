@@ -4,7 +4,8 @@ from os import listdir
 from os.path import isfile, join
 import re
 import pandas as pd
-from decode import decodemetar, decodesynop, decodeisd
+from decode import isdread, synopread, metarread
+from decode_para import fusedata, writeoutput, fuse_diff_timesteps
 
 ################################################################################
 ################################################################################
@@ -17,7 +18,7 @@ from decode import decodemetar, decodesynop, decodeisd
 # saves the file in <data>/<output>. Usually it should gzip the files, because
 # of loads of redudant values in.
 
-def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
+def split_isd_data(station, yearstr, yearend, mk_isd, mk_meta, csv):
     '''
     This function reads ISD data in and writes the data into a metar-, synop-, and/or isd-named file or to write a KASS-D readable file.
     The function is driven from main.py with input variable like years(time range) and station.
@@ -26,58 +27,38 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
     datapath_data = '../data'           # source file
     datapath_out  = '../data/output/'   # target file
 
+    # define some variables
     years = np.arange(yearstr,yearend)
+    fuse_timestep = False
+    skip = False
+    priority = ['isd','synop','metar']
 
-    header_SYNOP = ['T','Td','Tmax','Tmin','RH','Wdir','Wspd','Prec','clhlow','clfrtot','clfrlow','clt_l','clt_m','clt_h','clh1','clfr1','clty1','clh2','clfr2','clty2','clh3','clfr3','clty3','clh4','clfr4','clty4']
-    header_METAR = ['METwdir','METwspd','METwgst','visib','press','temp','dewp','whe_phe','cc1','ch1','cc2','ch2','cc3','ch3','cc4','ch4']
-    header_ISD = ['wind_dir','wind_spd','temp','dtemp','press','Sundur','synwea','synweco1','synweco2','metwe','preci1','precih1','preci2','precih2','preci3','precih3','preci4','precih4','clct','clfl','clgl','clhl','clgm','clgh','ga1clc','ga1clh','ga1clt','ga2clc','ga2clh','ga2clt','ga3clc','ga3clh','ga3clt','ga4clc','ga4clh','ga4clt','ga5clc','ga5clh','ga5clt','ga6clc','ga6clh','ga6clt']
-    # header for KASS-D
-    variables_synop = 'variable = cloud_height_lowest,cloud_area_fraction_total,cloud_area_fraction_lowest,'+ \
-        'cloud_genus_low,cloud_genus_medium,cloud_genus_high,cloud_altitude_1,cloud_fraction_1,cloud_type_1,'+ \
-        'cloud_altitude_2,cloud_fraction_2,cloud_type_2,cloud_altitude_3,cloud_fraction_3,cloud_type_3'
-
+    # headers
+    index = ['wind_dir','wind_spd','wind_gst','temp','dtemp','press','sundur','synwea','synweco1','synweco2','metwe','preci1','precih1','preci2','precih2','preci3','precih3','preci4','precih4','clct','clfl','clgl','clhl','clgm','clgh','ga1clc','ga1clh','ga1clt','ga2clc','ga2clh','ga2clt','ga3clc','ga3clh','ga3clt','ga4clc','ga4clh','ga4clt','ga5clc','ga5clh','ga5clt','ga6clc','ga6clh','ga6clt']
                                
     # Which files to create
-    if mk_metar:
-        outfile_met = open(datapath_out+'met_%s_%s.txt' % (station,str(yearstr)+'_'+str(yearend)) , 'w')
-        outfile_met.write('%9s %6s ' % ('Date','Time'))
-        outfile_met.write('%6s %6s ' % ('lat:','lon:'))
-        # Create File Header met
-        for ih in range(len(header_METAR)):
-            outfile_met.write('%9s ' % header_METAR[ih])
-        outfile_met.write('\n')
-
-    if mk_synop:
-        outfile_syn = open(datapath_out+'syn_%s_%s.txt' % (station,str(yearstr)+'_'+str(yearend)) , 'w')
-        outfile_syn.write('%9s %6s ' % ('Date','Time'))
-        outfile_syn.write('%6s %6s ' % ('lat:','lon:'))
-        # Create File Header syn
-        for ih in range(len(header_SYNOP)):
-            outfile_syn.write('%9s ' % header_SYNOP[ih])
-        outfile_syn.write('\n')
+    if mk_meta:
+        outfile_meta = open(datapath_out+'meta_%s_%s.txt' % (station,str(yearstr)+'_'+str(yearend-1)) , 'w')
+        outfile_meta.write('Date,Time,isd,synop,metar,\n')
 
     if mk_isd:
         outfile_isd = open(datapath_out+'isd_%s_%s.txt' % (station,str(yearstr)+'_'+str(yearend-1)) , 'w')
-        outfile_isd.write('%9s %6s ' % ('Date','Time'))
-        outfile_isd.write('%6s %6s ' % ('lat:','lon:'))
-        # Create File Header isd
-        for ih in range(len(header_ISD)):
-            outfile_isd.write('%9s ' % header_ISD[ih])
-        outfile_isd.write('\n')
+        if csv:
+            outfile_isd.write('Date,Time')
+            outfile_isd.write(',lat:,lon:')
+            for ih in range(len(index)):
+                outfile_isd.write(','+index[ih])
+                outfile_isd.write(','+index[ih])
+            outfile_isd.write('\n')
+        else:
+            outfile_isd.write('%9s %6s ' % ('Date','Time'))
+            outfile_isd.write('%6s %6s ' % ('lat:','lon:'))
+            # Create File Header isd
+            for ih in range(len(index)):
+                outfile_isd.write('%9s ' % index[ih])
+                outfile_isd.write('%9s ' % index[ih])
+            outfile_isd.write('\n')
 
-
-    '''
-    RELICT, TRY
-                        This is for kassd format
-                        if mk_synop:
-                            tfile_syn =  open(datapath_out+'syn_%s_%s.txt' % (stat,YY) , 'w')
-                          # Create File Header syn
-                          outfile_syn.write('station_name = Libreville \nstation_id = '+station[0][0:5]+ \
-                           ' \nlat = '+lat+' \nlon = '+lon+'\n')
-                        utfile_syn.write(variables_synop+'\n')
-                          outfile_syn.write('m, , , , , ,m, , ,m, , ,m, ,\n')
-    '''
-    
     for YY in years: 
         try:
             filenames = [f for f in listdir(datapath_data+'/%s' % str(YY)) if f == station+'-99999-'+str(YY)]
@@ -97,13 +78,22 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
         time_prev = ''
 		
         # GO through data line by line
-        isd_write = True
-        isd_write_next = True
         for i_line,line in enumerate(data):
 			
             date = line[15:23]
             time = line[23:27]
-			
+
+            # test for twice the same timestep
+            try:
+                date_next = data[i_line+1][15:23]
+                time_next = data[i_line+1][23:27]
+            except:
+                data_next = None
+                time_next = None
+            
+            if date_next == date and time_next == time:
+                fuse_timestep = True
+
             # Proof if SYNOP and/or METAR is in with the prefix in the ISD code
             metardata = False
             synopdata = False
@@ -127,63 +117,93 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_metar, mk_synop):
             elif line[41:46] == 'SY-SA':
                 synopdata = True
 
-            # Check if there is twice the same time stamp
-            isd_write_next = True
-            try:
-                if date == data[i_line+1][15:23] and time == data[i_line+1][23:27]:
-                    if synopdata == True and metardata == True:
-                        isd_write_next = False
-                    elif synopdata == True and metardata == False:
-                        isd_write_next = False
-                    elif synopdata == False and metardata == True:
-                        if data[i_line+1][41:46] == 'SY-MT' or data[i_line+1][41:46] == 'FM-12' or data[i_line+1][41:46] == 'FM-14' or\
-                                data[i_line+1][41:46] == 'S-S-A' or data[i_line+1][41:46] == 'SY-AE' or data[i_line+1][41:46] == 'SY-AU' or\
-                                data[i_line+1][41:46] == 'SY-SA':
-                            isd_write = False
-                        else:
-                            isd_write = True
-                    elif synopdata == False and metardata == False:
-                        continue
-            except:
-                pass
-
-            ###############################################################################
-            ############### METAR decoding and writing in met_-file #######################
-            ###############################################################################
-
-            if mk_metar and metardata:
-
-                decodemetar(line,date,time,lat,lon,header_METAR,outfile_met)
-
-
-            ###############################################################################
-            ################### SYNOP only ################################################
-            ###############################################################################
-
-            if mk_synop and synopdata:
-
-                decodesynop(station,line,date,time,lat,lon,header_SYNOP,outfile_syn)
+            if mk_meta:
+                outfile_meta.write(date+','+time+',1,')
+                if synopdata:
+                    outfile_meta.write('1,')
+                else:
+                    outfile_meta.write('0,')
+                if metardata:
+                    outfile_meta.write('1\n')
+                else:
+                    outfile_meta.write('0\n')
 
 	
             ###############################################################################
             ################### ISD only ##################################################
             ###############################################################################
-            if mk_isd and isd_write:
+            if mk_isd:
+                # skip writing output, because next timestep is the same 
+                if fuse_timestep:
+                    # read and decode isd, synops, and metar information
+                    isdser = isdread(line,index)
+                    synopser = synopread(line,index,station,i_line)
+                    metarser = metarread(line,index,i_line)
+                
+                    # fuse the three different data sources
+                    (series, mask) = fusedata(isdser, synopser, metarser, index, priority)
+                    skip = True
+                    fuse_timestep = False
 
-                decodeisd(station,line,date,time,lat,lon,header_ISD,outfile_isd,synopdata,metardata)
+                # the same timestep, fuse both and write
+                elif skip:      
+                    # read and decode isd, synops, and metar information
+                    isdser_next = isdread(line,index)
+                    synopser_next = synopread(line,index,station,i_line)
+                    metarser_next = metarread(line,index,i_line)
 
-            # Handle bool variable of not having twice the same timestep
-            isd_write = True
-            if isd_write_next == False:
-                isd_write = False
+                    # fuse the three different data sources and previous timestep
+                    (series_next,mask_next) = fusedata(isdser_next, synopser_next, metarser_next, index, priority)
+                    (series_fuse, mask) = fuse_diff_timesteps(series, series_next, mask, mask_next, index)
+
+                    # Write date, time, and coords
+                    if csv:
+                        outfile_isd.write(date+','+time)
+                        outfile_isd.write(','+lat+','+lon)
+                    else:
+                        outfile_isd.write('%9s %6s ' % (date,time))
+                        outfile_isd.write('%6s %6s ' % (lat,lon))
+
+                    # Write variables into files
+                    for var in index:
+                        if var == 'wind_dir' and series[var] == -1.:
+                            writeoutput(outfile_isd,'VRB',csv)
+                        else:
+                            writeoutput(outfile_isd,series_fuse[var],csv)
+                            writeoutput(outfile_isd,mask[var],csv)
+                    outfile_isd.write('\n')
+                    skip = False
+
+                # business as usual
+                else:
+                    # read and decode isd, synops, and metar information
+                    isdser = isdread(line,index)
+                    synopser = synopread(line,index,station,i_line)
+                    metarser = metarread(line,index,i_line)
+                
+                    # fuse the three different data sources
+                    (series, mask) = fusedata(isdser, synopser, metarser, index, priority)
+    
+                    # Write date, time, and coords
+                    if csv:
+                        outfile_isd.write(date+','+time)
+                        outfile_isd.write(','+lat+','+lon)
+                    else:
+                        outfile_isd.write('%9s %6s ' % (date,time))
+                        outfile_isd.write('%6s %6s ' % (lat,lon))
+                    # Write variables into files
+                    for var in index:
+                        if var == 'wind_dir' and series[var] == -1.:
+                            writeoutput(outfile_isd,'VRB',csv)
+                        else:
+                            writeoutput(outfile_isd,series[var],csv)
+                            writeoutput(outfile_isd,mask[var],csv)
+                    outfile_isd.write('\n')
 
 			
-    # End Line ---------------------------------------------------------------------
-
-    if mk_metar:
-        outfile_met.close()
-    if mk_synop:
-        outfile_syn.close()
+    # end writing
     if mk_isd:
         outfile_isd.close()
+    if mk_meta:
+        outfile_meta.close()
     				
