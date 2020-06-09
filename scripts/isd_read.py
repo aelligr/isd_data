@@ -168,6 +168,7 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_meta, csv):
                     for var in index:
                         if var == 'wind_dir' and series[var] == -1.:
                             writeoutput(outfile_isd,'VRB',csv)
+                            writeoutput(outfile_isd,mask[var],csv)
                         else:
                             writeoutput(outfile_isd,series_fuse[var],csv)
                             writeoutput(outfile_isd,mask[var],csv)
@@ -195,6 +196,7 @@ def split_isd_data(station, yearstr, yearend, mk_isd, mk_meta, csv):
                     for var in index:
                         if var == 'wind_dir' and series[var] == -1.:
                             writeoutput(outfile_isd,'VRB',csv)
+                            writeoutput(outfile_isd,mask[var],csv)
                         else:
                             writeoutput(outfile_isd,series[var],csv)
                             writeoutput(outfile_isd,mask[var],csv)

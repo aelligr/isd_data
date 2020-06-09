@@ -169,9 +169,14 @@ def isdread(line,index):
         # Find radiation in ISD and SYNOP
         gj1 = str(re.findall('GJ1\d{4}\w{1}',line))
         if len(gj1) > 3:
-            # Cloud fraction total
             if gj1[5:9] != '9999':
                 isdser['sundur'] = str(round(float(gj1[5:9])/60))
+
+        # find weather condition
+        mw1 = str(re.findall('MW1\d{2}\w{1}',line))
+        if len(mw1) > 3:
+            isdser['metwe'] = mw1[5:7]
+
 
     return isdser
 
